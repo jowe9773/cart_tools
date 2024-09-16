@@ -2,6 +2,8 @@
 
 #import packages and modules
 import xml.etree.ElementTree as ET
+import tkinter as tk
+from tkinter import filedialog
 import numpy as np
 from osgeo import gdal,osr
 import pandas as pd
@@ -10,6 +12,39 @@ import shapely.geometry
 import rasterio
 
 
+class FileFunctions:
+    """Class contains methods for managing files"""
+
+    def __init__(self):
+        print("Initialized file managers")
+
+    def load_dn(self, purpose):
+        """this function opens a tkinter GUI for selecting a 
+        directory and returns the full path to the directory 
+        once selected
+        
+        'purpose' -- provides expanatory text in the GUI
+        that tells the user what directory to select"""
+
+        root = tk.Tk()
+        root.withdraw()
+        directory_name = filedialog.askdirectory(title = purpose)
+
+        return directory_name
+
+    def load_fn(self, purpose):
+        """this function opens a tkinter GUI for selecting a 
+        file and returns the full path to the file 
+        once selected
+        
+        'purpose' -- provides expanatory text in the GUI
+        that tells the user what file to select"""
+
+        root = tk.Tk()
+        root.withdraw()
+        filename = filedialog.askopenfilename(title = purpose)
+
+        return filename
 
 class SickFunctions:
     """class containing methods for sick processing"""
@@ -21,12 +56,6 @@ class SickFunctions:
         """method for taking a .DAT file and turning it into a usable numpy array"""
 
         file = filename.split('/')[-1]
-        # Open the binary file
-        with open(filename, 'rb') as f:
-            # Read the binary data into a NumPy array
-            data = np.fromfile(f, dtype=np.float32)  # Adjust dtype according to your data type
-
-        data[data==-9999] = np.nan
 
         # Get Grid start and end from filename:
         grid_inds = [file.find('Grid='),file.find('Grid=')+len('Grid=')]
@@ -38,7 +67,6 @@ class SickFunctions:
 
         xy_string = file[xy_inds[-1]:]
         xy_string = xy_string.strip().replace('(','').replace(')','').replace('_TopoData.DAT','')
-        print(xy_string)
         xy_start_string  = xy_string.split(' to ')[0]
         xy_end_string    = xy_string.split(' to ')[1]
         xy_start         = np.asarray(xy_start_string.split(',')).astype('float')
@@ -49,11 +77,58 @@ class SickFunctions:
         ymin = xy_start[1]
         ymax = xy_end[1]
 
+        # Open the binary file
+        with open(filename, 'rb') as f:
+            # Read the binary data into a NumPy array
+            data = np.fromfile(f, dtype=np.float32)  # Adjust dtype according to your data type
+
+        data[data==-9999] = np.nan
+
+        print(data)
+
         # Read the Corresponding XML File:
         xml_filename = filename[0:-4]+'.xml'
         xml_data = ET.parse(xml_filename)
         root = xml_data.getroot()
         width = int(root.find('.//parameter[@name="width"]').text)
+
+        topo = data.reshape([int(len(data)/width),width])
+
+        topo = topo[::-1, :]
+
+        print(f'Number of Datapoints: {topo.flatten().shape}')
+
+        return topo, xmin, xmax, ymin, ymax
+    
+    def load_swath_sick_file(self, filename):
+
+        #Extract information from the filename
+        file = filename.split('/')[-1]
+
+        #get x (center) and y (min and max):
+        y = file.split("(SwathMM_")[1].split(", ")[0]
+        xmin = file.split("(SwathMM_")[1].split(", ")[1].split(" to ")[0]
+        xmax = file.split("(SwathMM_")[1].split(", ")[1].split(" to ")[1].split(")")[0]
+
+        #turn them into integers
+        y = float(y)
+        xmin = float(xmin)
+        xmax = float(xmax)
+
+        #find xmin and xmax given a swath width of 1157
+        ymin = y - 1157/2
+        ymax = y + 1157/2
+
+        # Open the binary file
+        with open(filename, 'rb') as f:
+            # Read the binary data into a NumPy array
+            data = np.fromfile(f, dtype=np.float32)  # Adjust dtype according to your data type
+
+        print(data)
+
+        data[data==-9999] = np.nan
+
+        width = 9760
 
         topo = data.reshape([int(len(data)/width),width])
 
@@ -149,7 +224,7 @@ class SickFunctions:
         return wood
 
 
-    def export_topo_as_geotiff(self, filename, projection_num, out_directory, topo, sick, wood = False, remobilization = False):
+    def export_topo_as_geotiff(self, filename, projection_num, out_directory, topo, sick):
         """method for exporting a particular scan or map as a geotiff file"""
 
         xmin = sick[1]
@@ -168,14 +243,7 @@ class SickFunctions:
 
         out_names = filename.split("/")[-1].split("_")[:3]
 
-        if wood is True:
-            output_filename = out_directory + "/" + out_names[0] + "_" + out_names[1] + "_woodmap.tif"
-
-        elif remobilization is True:
-            output_filename = out_directory + "/" + out_names[0] + "_" + out_names[1] + "_remobilizationmap.tif"
-
-        else:
-            output_filename = out_directory + "/" + out_names[0] + "_" + out_names[1] + "_" + out_names[2] + '.tif'
+        output_filename = out_directory + "/" + out_names[0] + "_" + out_names[1] + "_" + out_names[2] + '.tif'
 
         ds = driver.Create(output_filename, rows, cols, 1, gdal.GDT_Float32, [ 'COMPRESS=LZW' ] )
         if proj is not None:
