@@ -15,7 +15,7 @@ class SickFunctions:
     """class containing methods for sick processing"""
         
     def __init__(self):
-        print("initialized")
+        print("Initialized SickFunctions")
 
     def load_processed_sick_file(self, filename):
         """method for taking a .DAT file and turning it into a usable numpy array"""
@@ -198,7 +198,7 @@ class MassaFunctions:
     """This class contains the tools that will come together to process the massa data"""
 
     def __init__(self):
-        print("initialized")
+        print("Initialized MassaFunctions")
 
     def load_massa_file(self, filepath, epsg):
         """take massa file and turn it into a geopandas dataframe"""
