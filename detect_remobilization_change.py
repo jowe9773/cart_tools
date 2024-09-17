@@ -9,11 +9,11 @@ from functions import FileFunctions, SickFunctions
 ff = FileFunctions()
 sf = SickFunctions()
 
-class DetectWood:
+class DetectRemobilizationChange:
     def __init__(self):
         print("Initialized DetectWood class")
 
-    def detect_wood(self, before_fn, after_fn, parameters):
+    def detect_remobilization_change(self, before_fn, after_fn, parameters):
         #load in these geotiffs so that they can have their change detected
         before_dataset = gdal.Open(before_fn)
         after_dataset = gdal.Open(after_fn)
@@ -35,9 +35,9 @@ class DetectWood:
 
         mask, sieve, connectedness = parameters
 
-        wood = sf.detect_change(before_topo, after_topo, mask, sieve, connectedness)
+        change = sf.detect_change(before_topo, after_topo, mask, sieve, connectedness)
 
-        return after, wood
+        return after, change
 
 
 
@@ -55,17 +55,17 @@ if __name__ == "__main__":
     params = (MASK_THRESHOLD, SIEVE_THRESHOLD, CONNECTEDNESS)
 
     #select before and after geotiff files
-    before_fn = ff.load_fn("Select a before topo geotiff file")
-    after_fn = ff.load_fn("Select an after topo geotiff file")
+    before_fn = ff.load_fn("Select a wood topo geotiff file")
+    after_fn = ff.load_fn("Select a remobilization topo geotiff file")
 
     #Select a directory to store output in
-    out = ff.load_dn("Select a directory to store woodmap in")
+    out = ff.load_dn("Select a directory to store remobilization map in")
 
     #initialize the DetectWood class:
-    dw = DetectWood()
+    drc = DetectRemobilizationChange()
 
     #send these datasets and parameters into the "detect_wood function"
-    after, woodmap = dw.detect_wood(before_fn, after_fn, params)
+    after, woodmap = drc.detect_remobilization_change(before_fn, after_fn, params)
 
     #export the wood map as a geotiff
-    sf.export_topo_as_geotiff(after_fn, EPSG, out, woodmap, after, marker = "map")
+    sf.export_topo_as_geotiff(after_fn, EPSG, out, woodmap, after, marker = "change")

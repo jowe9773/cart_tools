@@ -176,7 +176,7 @@ class SickFunctions:
         return interpolated_topo
 
 
-    def extract_wood(self, topo1, topo2, mask_threshold, sieve_threshold, connectedness):
+    def detect_change(self, topo1, topo2, mask_threshold, sieve_threshold, connectedness):
 
         """method for finding areas of change (presence or movement of wood)"""
         #difference the before and after
@@ -224,7 +224,7 @@ class SickFunctions:
         return wood
 
 
-    def export_topo_as_geotiff(self, filename, projection_num, out_directory, topo, sick):
+    def export_topo_as_geotiff(self, filename, projection_num, out_directory, topo, sick, marker = ""):
         """method for exporting a particular scan or map as a geotiff file"""
 
         xmin = sick[1]
@@ -243,7 +243,7 @@ class SickFunctions:
 
         out_names = filename.split("/")[-1].split("_")[:3]
 
-        output_filename = out_directory + "/" + out_names[0] + "_" + out_names[1] + "_" + out_names[2] + '.tif'
+        output_filename = out_directory + "/" + out_names[0] + "_" + out_names[1] + "_" + out_names[2].split(".")[0] + marker + '.tif'
 
         ds = driver.Create(output_filename, rows, cols, 1, gdal.GDT_Float32, [ 'COMPRESS=LZW' ] )
         if proj is not None:
@@ -261,6 +261,7 @@ class SickFunctions:
         ss_band.FlushCache()
         ss_band.ComputeStatistics(False)
         ss_band.SetUnitType('m')
+
 
 class MassaFunctions:
     """This class contains the tools that will come together to process the massa data"""
