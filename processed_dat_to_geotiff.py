@@ -7,20 +7,26 @@ from functions import FileFunctions, SickFunctions
 ff = FileFunctions()
 sf = SickFunctions()
 
+class ProcessedDatToGeotiff:
+    def __init__(self):
+        print("Initialized ProcessedDatToGeotiff class")
 
-def processed_dat_to_geotiff(filename, proj_num, out_dir):
+    def processed_dat_to_geotiff(self, filename, proj_num, out_dir):
 
-    #load the file into a numpy array
-    sick_data = sf.load_processed_sick_file(filename)
+        #load the file into a numpy array
+        sick_data = sf.load_processed_sick_file(filename)
 
-    #interpolate and fill nulls
-    topo_filled = sf.fill_nulls(sick_data[0])
+        #interpolate and fill nulls
+        topo_filled = sf.fill_nulls(sick_data[0])
 
-    #export the filled topo as a geotiff
-    sf.export_topo_as_geotiff(filename, proj_num, out_dir, topo_filled, sick_data)
+        #export the filled topo as a geotiff
+        sf.export_topo_as_geotiff(filename, proj_num, out_dir, topo_filled, sick_data)
 
 
 if __name__ == "__main__":
+
+    #instantiate class
+    pdtg = ProcessedDatToGeotiff()
 
     #parameters to change (if applicable)
     PROJ_NUM = 32615
@@ -28,9 +34,8 @@ if __name__ == "__main__":
     #select a file to process
     fn = ff.load_fn("Select a .dat file to process")
 
+    #select a directory for storage location of output
     out = ff.load_dn("Select a output directory for geotiff")
 
-    #select a directory for storage location of output
-
     #process the file and export to geotiff
-    processed_dat_to_geotiff(fn, PROJ_NUM, out)
+    pdtg.processed_dat_to_geotiff(fn, PROJ_NUM, out)
